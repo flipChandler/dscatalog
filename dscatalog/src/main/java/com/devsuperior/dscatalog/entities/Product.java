@@ -32,7 +32,7 @@ public class Product implements Serializable {
 	private Double price;
 	private String imgUrl;
 	
-	@Column(columnDefinition = "TIMESTAMP WITHOUT TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITHOUT TIME ZONE")			// armazenar data no UTC
 	private Instant date;
 	
 	@ManyToMany
@@ -47,7 +47,6 @@ public class Product implements Serializable {
 
 	// não colocar collections no construtor
 	public Product(Long id, String name, String description, Double price, String imgUrl, Instant date) {
-		super();
 		this.id = id;
 		this.name = name;
 		this.description = description;

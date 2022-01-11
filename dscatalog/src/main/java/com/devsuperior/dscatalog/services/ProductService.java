@@ -30,11 +30,11 @@ public class ProductService {
 	@Autowired
 	private CategoryRepository categoryRepository;
 	
-	@Transactional(readOnly = true) // readOnly evita o lock no BD | não trava o BD pra fazer essa query
+	@Transactional(readOnly = true) 									// readOnly evita o lock no BD | não trava o BD pra fazer essa query
 	public Page<ProductDTO> findAllPaged(PageRequest pageRequest) {
-		Page<Product> list = repository.findAll(pageRequest); // Page já é um stream
+		Page<Product> list = repository.findAll(pageRequest); 			// Page já é um stream
 		
-		return list.map(product -> new ProductDTO(product));
+		return list.map(product -> new ProductDTO(product, product.getCategories()));
 	}
 	
 	@Transactional(readOnly = true)
@@ -55,7 +55,7 @@ public class ProductService {
 	@Transactional
 	public ProductDTO update(ProductDTO dto) {
 		try {
-			Product entity = repository.getById(dto.getId()); // getById é lazy loading?
+			Product entity = repository.getById(dto.getId()); 			// getById é lazy loading?
 			copyDtoToEntity(dto, entity);
 			entity = repository.save(entity);
 			return new ProductDTO(entity);
