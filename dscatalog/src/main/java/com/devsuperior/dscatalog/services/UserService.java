@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.devsuperior.dscatalog.dto.RoleDTO;
 import com.devsuperior.dscatalog.dto.UserDTO;
 import com.devsuperior.dscatalog.dto.UserInsertDTO;
+import com.devsuperior.dscatalog.dto.UserUpdateDTO;
 import com.devsuperior.dscatalog.entities.Role;
 import com.devsuperior.dscatalog.entities.User;
 import com.devsuperior.dscatalog.repository.RoleRepository;
@@ -59,9 +60,9 @@ public class UserService {
 	}	
 
 	@Transactional
-	public UserDTO update(UserDTO dto) {
+	public UserDTO update(UserUpdateDTO dto) {
 		try {
-			User entity = repository.getById(dto.getId()); 								// getById é lazy loading?
+			User entity = repository.getById(dto.getId()); 				// getById é lazy loading?
 			copyDtoToEntity(dto, entity);
 			entity = repository.save(entity);
 			return new UserDTO(entity);
