@@ -1,5 +1,7 @@
 package com.devsuperior.dscatalog.services;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
@@ -32,8 +34,10 @@ public class ProductService {
 	
 	@Transactional(readOnly = true) 																			// readOnly evita o lock no BD | não trava o BD pra fazer essa query
 	public Page<ProductDTO> findAllPaged(Long categoryId, String name, PageRequest pageRequest) {
-		Category category = (categoryId == 0) ? null : categoryRepository.getOne(categoryId);
-		Page<Product> list = repository.findProductsWithCategories(category, name.trim(), pageRequest); 		// Page já é um stream
+		List<Category> categories = (categoryId == 0) ? null : 
+			Arrays.asList(categoryRepository.getOne(categoryId));
+		
+		Page<Product> list = repository.findProductsWithCategories(categories, name.trim(), pageRequest); 		// Page já é um stream
 		
 		return list.map(product -> new ProductDTO(product, product.getCategories()));
 	}
