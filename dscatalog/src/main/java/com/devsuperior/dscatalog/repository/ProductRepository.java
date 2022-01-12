@@ -12,8 +12,8 @@ import com.devsuperior.dscatalog.entities.Product;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>{
 	
-	@Query("SELECT p FROM Product p INNER JOIN p.categories c WHERE "
-			+ ":category IN c")
-	Page<Product> findProductsWithCategories(Category category, Pageable pageable);
+	@Query("SELECT DISTINCT p FROM Product p INNER JOIN p.categories c WHERE "
+			+ "(:category IS NULL OR :category IN c)")									// SE NULL, findAll
+	Page<Product> findProductsWithCategories(Category category, Pageable pageable); 
 
 }
