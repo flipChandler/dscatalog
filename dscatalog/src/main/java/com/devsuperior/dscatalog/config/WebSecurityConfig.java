@@ -29,7 +29,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	public void configure(WebSecurity web) throws Exception {
-		web.ignoring().antMatchers("/actuator/**");										// biblioteca que o SS usa para passar nas requests
+		web.ignoring().antMatchers("/actuator/**");												// biblioteca que o SS usa para passar nas requests
+		web.ignoring().antMatchers("/v2/api-docs", "/configuration/ui", 
+				"/swagger-resources/**", "/configuration/**", "/swagger-ui.html", "/webjars/**");
 	}
 
 	@Override
