@@ -49,7 +49,7 @@ public class CategoryService {
 	@Transactional
 	public CategoryDTO update(CategoryDTO dto) {
 		try {
-			Category entity = repository.getById(dto.getId()); // getById é lazy loading?
+			Category entity = repository.getOne(dto.getId()); // getById é lazy loading?
 			entity.setName(dto.getName());
 			entity = repository.save(entity);
 			return new CategoryDTO(entity);

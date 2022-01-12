@@ -62,7 +62,7 @@ public class UserService {
 	@Transactional
 	public UserDTO update(UserUpdateDTO dto) {
 		try {
-			User entity = repository.getById(dto.getId()); 				// getById é lazy loading?
+			User entity = repository.getOne(dto.getId()); 				// getById é lazy loading?
 			copyDtoToEntity(dto, entity);
 			entity = repository.save(entity);
 			return new UserDTO(entity);
@@ -89,7 +89,7 @@ public class UserService {
 		entity.getRoles().clear();   									// limpar qlq role que possa ter aqui
 		
 		for (RoleDTO roleDTO : userDTO.getRoles()) {
-			Role role = roleRepository.getById(roleDTO.getId());
+			Role role = roleRepository.getOne(roleDTO.getId());
 			entity.getRoles().add(role);
 		}
 	}

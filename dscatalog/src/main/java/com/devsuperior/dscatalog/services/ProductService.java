@@ -55,7 +55,7 @@ public class ProductService {
 	@Transactional
 	public ProductDTO update(ProductDTO dto) {
 		try {
-			Product entity = repository.getById(dto.getId()); 			// getById é lazy loading?
+			Product entity = repository.getOne(dto.getId()); 			// getById é lazy loading?
 			copyDtoToEntity(dto, entity);
 			entity = repository.save(entity);
 			return new ProductDTO(entity);
@@ -84,7 +84,7 @@ public class ProductService {
 		entity.getCategories().clear();   // limpar qlq category que possa ter aqui
 		
 		for (CategoryDTO categoryDTO : dto.getCategories()) {
-			Category category = categoryRepository.getById(categoryDTO.getId());
+			Category category = categoryRepository.getOne(categoryDTO.getId());
 			entity.getCategories().add(category);
 		}
 	}
