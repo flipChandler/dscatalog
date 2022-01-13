@@ -68,14 +68,14 @@ public class ProductService {
 			throw new ResourceNotFoundException("Id not Found: " + dto.getId());
 		}
 	}
-
-	public void delete(Long id) {
-		try {
+																	
+	public void delete(Long id) {													
+		try {		
 			repository.deleteById(id);
-		} catch (EmptyResultDataAccessException e) {
-			throw new ResourceNotFoundException("Id not Found " + id);
-		} catch(DataIntegrityViolationException e) {
-			throw new DatabaseException("Integrity Violation!");
+		} catch (EmptyResultDataAccessException e) {							// productRepository lança o EmptyResultDataAccessException
+			throw new ResourceNotFoundException("Id not Found " + id);			// productService lança o ResourceNotFoundException 	
+		} catch(DataIntegrityViolationException e) {							// productRepository lança o DataIntegrityViolationException		
+			throw new DatabaseException("Integrity Violation!");				// productService lança o DatabaseException
 		}
 	}
 	
