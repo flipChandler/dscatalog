@@ -2,8 +2,8 @@ package com.devsuperior.dscatalog.tests.services;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -26,8 +26,10 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.devsuperior.dscatalog.dto.CategoryDTO;
 import com.devsuperior.dscatalog.dto.ProductDTO;
 import com.devsuperior.dscatalog.entities.Product;
 import com.devsuperior.dscatalog.repository.ProductRepository;
@@ -37,6 +39,7 @@ import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
 import com.devsuperior.dscatalog.tests.factory.ProductFactory;
 
 @ExtendWith(SpringExtension.class)
+// @Transactional								// faz o rollback do banco em cada test 
 public class ProductServiceTests {
 
 	@InjectMocks
@@ -48,31 +51,32 @@ public class ProductServiceTests {
 	private long existingId;
 	private long nonExistingId;
 	private long dependentId;
-	private Product product;
-	private ProductDTO productDTO;
+	private Product product, product2;
 	private PageImpl<Product> page;
-	private PageRequest pageRequest;
-	private long countTotalProducts;
+
 
 	@BeforeEach
 	void setup() {
 		existingId = 1L;
 		nonExistingId = 1000L;
 		dependentId = 4L;		
-		pageRequest = PageRequest.of(0, 10);
-		countTotalProducts = 24L;
 		this.startProduct();
 
 		when(productRepository.save(any())).thenReturn(product);
 	}
 	
-	// @Test
-	public void findAllPagedShouldReturnPage() {
-		when(productRepository.findProductsWithCategories(any(), anyString(), any())).thenReturn(page);
+	@Test
+	public void findAllPagedShouldReturnPage_whenPage0Size10() {
+		PageRequest pageRequest = PageRequest.of(0, 10);
+		// TODO: fix logic test
+		when(productRepository.findProductsWithCategories(any(), anyString(), (Pageable)any())).thenReturn(page);
 
-		Page<ProductDTO> response = productService.findAllPaged(null, "", pageRequest);
+		Page<ProductDTO> response = productService.findAllPaged(0L, "", pageRequest);
 
-		assertNotNull(response);
+		assertFalse(response.isEmpty()); 													// esse resultado tem que ser falso
+		assertEquals(0, response.getNumber()); 												// a página é realmente a 0?
+		assertEquals(3, response.getSize());												// o tamanho da página é 10?
+		assertEquals(3, response.getTotalElements());										// tem 1 produto dentro do Mockito
 	}
 
 	@Test
@@ -98,12 +102,12 @@ public class ProductServiceTests {
 	
 	@Test
 	public void updateShouldReturnProductDTOInstance_whenIdExists() {
-		
+		// TODO: update return a ProductDTO
 	}
 	
 	@Test
 	public void updateShouldThrowResourceNotFoundException_whenIdDoesNotExist() {
-		
+		// TODO: update throw exception
 	}
 
 	@Test
@@ -142,7 +146,7 @@ public class ProductServiceTests {
 	
 	void startProduct() {
 		product = ProductFactory.createProduct();
-		productDTO = ProductFactory.createProductDTO();
-		page = new PageImpl<>(List.of(product));
+		product2 = ProductFactory.createProduct();
+		page = new PageImpl<>(List.of(product, product2, new Product()));
 	}
 }
