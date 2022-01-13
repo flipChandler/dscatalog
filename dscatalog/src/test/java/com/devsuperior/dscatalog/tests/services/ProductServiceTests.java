@@ -3,6 +3,7 @@ package com.devsuperior.dscatalog.tests.services;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -49,7 +50,6 @@ public class ProductServiceTests {
 	private long dependentId;
 	private Product product;
 	private ProductDTO productDTO;
-	private Optional<Product> optionalProduct;
 	private PageImpl<Product> page;
 	private PageRequest pageRequest;
 	private long countTotalProducts;
@@ -58,22 +58,26 @@ public class ProductServiceTests {
 	void setup() {
 		existingId = 1L;
 		nonExistingId = 1000L;
-		dependentId = 4L;
-		product = ProductFactory.createProduct();
-		productDTO = ProductFactory.createProductDTO();
-		optionalProduct = Optional.of(product);
-		page = new PageImpl<>(List.of(product));
+		dependentId = 4L;		
 		pageRequest = PageRequest.of(0, 10);
 		countTotalProducts = 24L;
+		this.startProduct();
 
 		when(productRepository.save(any())).thenReturn(product);
-		when(productRepository.findById(existingId)).thenReturn(Optional.of(product));
-		when(productRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+	}
+	
+	// @Test
+	public void findAllPagedShouldReturnPage() {
+		when(productRepository.findProductsWithCategories(any(), anyString(), any())).thenReturn(page);
+
+		Page<ProductDTO> response = productService.findAllPaged(null, "", pageRequest);
+
+		assertNotNull(response);
 	}
 
 	@Test
 	public void findByIdShouldReturnProductDTOInstance_whenIdExists() {
-		when(productRepository.findById(any())).thenReturn(optionalProduct);
+		when(productRepository.findById(existingId)).thenReturn(Optional.of(product));
 
 		ProductDTO response = productService.findById(existingId);
 
@@ -88,8 +92,18 @@ public class ProductServiceTests {
 		when(productRepository.findById(any())).thenThrow(new ResourceNotFoundException("Entity Not Found"));
 
 		assertThrows(ResourceNotFoundException.class, () -> {
-			ProductDTO response = productService.findById(existingId);
+			productService.findById(existingId);
 		});
+	}
+	
+	@Test
+	public void updateShouldReturnProductDTOInstance_whenIdExists() {
+		
+	}
+	
+	@Test
+	public void updateShouldThrowResourceNotFoundException_whenIdDoesNotExist() {
+		
 	}
 
 	@Test
@@ -125,13 +139,10 @@ public class ProductServiceTests {
 		verify(productRepository, times(1)).deleteById(dependentId); // se um produto tiver um pedido no futuro, não
 																		// poderá deletar um produto
 	}
-
-	// @Test
-	public void findAllPagedShouldReturnPage() {
-		when(productRepository.findProductsWithCategories(any(), anyString(), any())).thenReturn(page);
-
-		Page<ProductDTO> response = productService.findAllPaged(null, "", pageRequest);
-
-		assertNotNull(response);
+	
+	void startProduct() {
+		product = ProductFactory.createProduct();
+		productDTO = ProductFactory.createProductDTO();
+		page = new PageImpl<>(List.of(product));
 	}
 }
