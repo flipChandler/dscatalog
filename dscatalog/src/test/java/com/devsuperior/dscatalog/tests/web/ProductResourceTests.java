@@ -197,8 +197,7 @@ public class ProductResourceTests {
 				.header("Authorization", "Bearer " + accessToken)
 				.accept(MediaType.APPLICATION_JSON));
 		
-		result.andExpect(status().isNoContent());
-						
+		result.andExpect(status().isNoContent());						
 	}	
 	
 	@Test
@@ -216,7 +215,13 @@ public class ProductResourceTests {
 	@Test
 	public void deleteShouldThrowDatabaseException_whenIdIsDependent() throws Exception {
 		doThrow(DatabaseException.class).when(productService).delete(dependentId);				
-		// TODO: this logic test				
+		
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
+		ResultActions result = mockMvc.perform(delete("/products/{id}", dependentId)
+				.header("Authorization", "Bearer " + accessToken)
+				.accept(MediaType.APPLICATION_JSON));
+		
+		result.andExpect(status().isBadRequest());
 	}	
 	
 	private String obtainAccessToken(String username, String password) throws Exception {
@@ -227,8 +232,7 @@ public class ProductResourceTests {
 	    params.add("username", username);
 	    params.add("password", password);
 	 
-	    ResultActions result 
-	    	= mockMvc.perform(post("/oauth/token")
+	    ResultActions result = mockMvc.perform(post("/oauth/token")
 	    		.params(params)
 	    		.with(httpBasic(clientId, clientSecret))
 	    		.accept("application/json;charset=UTF-8"))
