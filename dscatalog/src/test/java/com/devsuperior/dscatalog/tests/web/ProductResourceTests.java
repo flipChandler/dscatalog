@@ -2,6 +2,9 @@ package com.devsuperior.dscatalog.tests.web;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,6 +32,7 @@ import org.springframework.util.MultiValueMap;
 
 import com.devsuperior.dscatalog.dto.ProductDTO;
 import com.devsuperior.dscatalog.services.ProductService;
+import com.devsuperior.dscatalog.services.exceptions.DatabaseException;
 import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
 import com.devsuperior.dscatalog.tests.factory.ProductFactory;
 
@@ -51,6 +55,7 @@ public class ProductResourceTests {
 	
 	private Long existingId;
 	private Long nonExistingId;
+	private Long dependentId;
 	private ProductDTO newProductDTO;
 	private ProductDTO existingProductDTO;
 	private PageImpl<ProductDTO> page;
@@ -59,6 +64,7 @@ public class ProductResourceTests {
 	void setup() throws Exception {
 		existingId = 1L;
 		nonExistingId = 2L;
+		dependentId = 3L;
 		newProductDTO = ProductFactory.createProductDTO(null);
 		existingProductDTO = ProductFactory.createProductDTO(existingId);
 		page = new PageImpl<>(List.of(existingProductDTO));
@@ -91,14 +97,49 @@ public class ProductResourceTests {
 	@Test
 	public void findAllShouldReturnPage() throws Exception {
 		when(productService.findAllPaged(any(), anyString(), any())).thenReturn(page);
-				
-		
+						
 		ResultActions result = mockMvc.perform(get("/products")
 				.accept(MediaType.APPLICATION_JSON));
 				
 		result.andExpect(status().isOk());
 		result.andExpect(jsonPath("$.content").exists());
 	}
+	
+	@Test
+	public void insertShouldReturnProductDTO() throws Exception {
+		when(productService.insert(any())).thenReturn(existingProductDTO);
+		
+	}
+
+	@Test
+	public void updateShouldReturnProductDTO() throws Exception {
+		when(productService.update(eq(existingId), any())).thenReturn(existingProductDTO);				// eq = permite passar um valor, qndo o outro parametro é any()
+							
+	}	
+	
+	@Test
+	public void updateShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
+		when(productService.update(eq(nonExistingId), any())).thenThrow(ResourceNotFoundException.class);				
+						
+	}	
+	
+	@Test
+	public void deleteShouldDoNothing_whenIdExist() throws Exception {
+		doNothing().when(productService).delete(existingId);				
+						
+	}	
+	
+	@Test
+	public void deleteShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
+		doThrow(ResourceNotFoundException.class).when(productService).delete(nonExistingId);				
+						
+	}
+	
+	@Test
+	public void deleteShouldThrowDatabaseException_whenIdIsDependent() throws Exception {
+		doThrow(DatabaseException.class).when(productService).delete(dependentId);				
+						
+	}	
 	
 	private String obtainAccessToken(String username, String password) throws Exception {
 		 
