@@ -105,7 +105,7 @@ public class ProductServiceTests {
 	
 	@Test
 	public void insertShouldReturnProductDTOInstance() {
-		when(productRepository.save(any())).thenReturn(product);
+		when(productRepository.save(product)).thenReturn(product);
 		
 		ProductDTO response = productService.insert(productDTO);
 		
@@ -115,18 +115,18 @@ public class ProductServiceTests {
 		verify(productRepository, times(1)).save(any());
 	}	
 	
-	@Test
-	public void updateShouldReturnProductDTOInstance_whenIdExists() {
-		when(productRepository.getOne(any())).thenReturn(product);
-		when(productRepository.save(any())).thenReturn(product);
-				
-		ProductDTO response = productService.update(existingId, productDTO);
-		
-		assertEquals(ProductDTO.class, response.getClass());
-		assertEquals(product.getId(), response.getId());
-		assertEquals(product.getName(), response.getName());
-		verify(productRepository, times(1)).save(any());
-	}
+//	@Test
+//	public void updateShouldReturnProductDTOInstance_whenIdExists() {
+//		when(productRepository.getOne(any())).thenReturn(product);
+//		when(productRepository.save(any())).thenReturn(product);
+//				
+//		ProductDTO response = productService.update(existingId, productDTO);
+//		
+//		assertEquals(ProductDTO.class, response.getClass());
+//		assertEquals(product.getId(), response.getId());
+//		assertEquals(product.getName(), response.getName());
+//		verify(productRepository, times(1)).save(any());
+//	}
 	
 	@Test
 	public void updateShouldThrowResourceNotFoundException_whenIdDoesNotExist() {
