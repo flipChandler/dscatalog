@@ -70,6 +70,16 @@ public class ProductRepositoryTests {
 	}
 	
 	@Test
+	public void findProductsWithCategoriesShouldReturnNothing_whenNameDoesNotExist() {
+		String name = "Camera";
+		
+		Page<Product> result = productRepository.findProductsWithCategories(null, name, pageRequest);
+		
+		assertTrue(result.isEmpty());
+	}
+	
+	
+	@Test
 	public void findProductsWithCategoriesShouldReturnProducts_whenNameIsEmpty() {
 		String name = "";
 		
