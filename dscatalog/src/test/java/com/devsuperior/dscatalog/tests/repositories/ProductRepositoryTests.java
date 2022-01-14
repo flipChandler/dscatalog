@@ -35,30 +35,32 @@ public class ProductRepositoryTests {
 	private long countPCGamerProducts;
 	private PageRequest pageRequest;
 	private List<Category> categories = new ArrayList<>();
+	private long countCategory1And2;
 	
 	@BeforeEach
 	public void setup() throws Exception {
 		existingId = 1L;
 		nonExistingId = 1000;
 		countTotalProducts = 25L;
-		countPCGamerProducts = 21L; 	// data.sql tem 21 PC GAMER
+		countPCGamerProducts = 21L; 							// data.sql tem 21 PC GAMER
 		pageRequest = PageRequest.of(0, 10);
-		categories.add(new Category(1L, "Livros"));		 // 1 produto com essa categoria
-		categories.add(new Category(2L, "Eletrônicos")); // 2 produtos com essa categoria
+		categories.add(new Category(1L, "Livros"));		 		// 1 produto com essa categoria
+		categories.add(new Category(2L, "Eletrônicos")); 		// 2 produtos com essa categoria
+		countCategory1And2 = 3L;
 	}
 	
 	@Test
-	public void findProductsWithCategoriesShouldReturnProducts_whenCategoriesExist() {
+	public void findProductsWithCategories_ShouldReturnProductsOnlySelectedFromInformedCategories() {
 		String name = "";
 		
 		Page<Product> result = productRepository.findProductsWithCategories(categories, name, pageRequest);
 		
 		assertFalse(result.isEmpty());
-		assertEquals(3, result.getTotalElements());
+		assertEquals(countCategory1And2, result.getTotalElements());
 	}
 	
 	@Test
-	public void findProductsWithCategoriesShouldReturnAnEmptyList_whenCategoriesIsIncorrect() {
+	public void findProductsWithCategories_ShouldReturnAnEmptyList_whenCategoriesIsIncorrect() {
 		String name = "";
 		categories.clear();
 		categories.add(new Category(4L, "Garden"));
@@ -70,27 +72,27 @@ public class ProductRepositoryTests {
 	}
 	
 	@Test
-	public void findProductsWithCategoriesShouldReturnNothing_whenNameDoesNotExist() {
+	public void findProductsWithCategories_ShouldReturnNothing_whenNameDoesNotExist() {
 		String name = "Camera";
 		
 		Page<Product> result = productRepository.findProductsWithCategories(null, name, pageRequest);
 		
 		assertTrue(result.isEmpty());
-	}
-	
+	}	
 	
 	@Test
-	public void findProductsWithCategoriesShouldReturnProducts_whenNameIsEmpty() {
+	public void findProductsWithCategories_ShouldReturnAllProducts_whenNameIsEmpty() {
 		String name = "";
+		categories = null;
 		
-		Page<Product> result = productRepository.findProductsWithCategories(null, name, pageRequest);
+		Page<Product> result = productRepository.findProductsWithCategories(categories, name, pageRequest);
 		
 		assertFalse(result.isEmpty());
 		assertEquals(countTotalProducts, result.getTotalElements());
 	}
 	
 	@Test
-	public void findProductsWithCategoriesShouldReturnProducts_whenNameExists() {
+	public void findProductsWithCategories_ShouldReturnProducts_whenNameExists() {
 		String name = "PC Gamer";
 		
 		Page<Product> result = productRepository.findProductsWithCategories(null, name, pageRequest);
@@ -100,7 +102,7 @@ public class ProductRepositoryTests {
 	}
 	
 	@Test
-	public void findProductsWithCategoriesShouldReturnProducts_whenNameExistsIgnoringCase() {
+	public void findProductsWithCategories_ShouldReturnProducts_whenNameExistsIgnoringCase() {
 		String name = "pc gAMer";
 		
 		Page<Product> result = productRepository.findProductsWithCategories(null, name, pageRequest);
@@ -110,7 +112,7 @@ public class ProductRepositoryTests {
 	}
 	
 	@Test
-	public void saveShouldPersistWithAutoincrement_whenIdIsNull() {
+	public void save_ShouldPersistWithAutoincrement_whenIdIsNull() {
 		Product product = ProductFactory.createProduct();
 		product.setId(null);
 		
@@ -120,11 +122,11 @@ public class ProductRepositoryTests {
 		assertNotNull(product.getId());
 		assertEquals(countTotalProducts + 1L, product.getId());
 		assertTrue(result.isPresent());
-		assertSame(result.get(), product);							// se é o mesmo objeto (cache da JPA não precisou ir ao banco de dados)
+		assertSame(result.get(), product);								// se é o mesmo objeto (cache da JPA não precisou ir ao banco de dados)
 	}
 	
 	@Test
-	public void deleteShouldDeleteObject_whenIdExists() {
+	public void delete_ShouldDeleteObject_whenIdExists() {
 		
 		productRepository.deleteById(existingId);
 		
@@ -134,7 +136,7 @@ public class ProductRepositoryTests {
 	}
 	
 	@Test
-	public void deleteShouldThrowEmptyResultDataAccessException_whenIdDoesNotExist() {
+	public void delete_ShouldThrowEmptyResultDataAccessException_whenIdDoesNotExist() {
 		
 		assertThrows(EmptyResultDataAccessException.class, () -> {
 			productRepository.deleteById(nonExistingId);
