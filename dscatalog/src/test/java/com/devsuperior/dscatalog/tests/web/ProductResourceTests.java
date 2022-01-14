@@ -7,6 +7,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -70,7 +71,11 @@ public class ProductResourceTests {
 		ResultActions result = mockMvc.perform(get("/products/{id}", existingId)
 				.accept(MediaType.APPLICATION_JSON));
 				
-		result.andExpect(status().isOk());		
+		result.andExpect(status().isOk());
+		result.andExpect(jsonPath("$.id").exists());
+		result.andExpect(jsonPath("$.id").value(existingId));
+		result.andExpect(jsonPath("$.name").value(existingProductDTO.getName()));
+		result.andExpect(jsonPath("$.price").value(existingProductDTO.getPrice()));
 	}
 	
 	@Test
@@ -91,7 +96,8 @@ public class ProductResourceTests {
 		ResultActions result = mockMvc.perform(get("/products")
 				.accept(MediaType.APPLICATION_JSON));
 				
-		result.andExpect(status().isOk());		
+		result.andExpect(status().isOk());
+		result.andExpect(jsonPath("$.content").exists());
 	}
 	
 	private String obtainAccessToken(String username, String password) throws Exception {
