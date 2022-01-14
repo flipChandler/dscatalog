@@ -79,6 +79,7 @@ public class ProductServiceTests {
 		assertEquals(0, response.getNumber()); 												// a página é realmente a 0?
 		assertEquals(3, response.getSize());												// o tamanho da página é 10?
 		assertEquals(3, response.getTotalElements());										// tem 1 produto dentro do Mockito
+		verify(productRepository, times(1)).findProductsWithCategories(any(), anyString(), (Pageable)any());
 	}
 
 	@Test
@@ -91,15 +92,17 @@ public class ProductServiceTests {
 		assertEquals(ProductDTO.class, response.getClass());
 		assertEquals(1L, response.getId());
 		assertEquals("Phone", response.getName());
+		verify(productRepository, times(1)).findById(any());
 	}
 
 	@Test
 	public void findByIdShouldThrowResourceNotFoundException_whenIdDoesNotExist() {
-		when(productRepository.findById(any())).thenThrow(new ResourceNotFoundException("Entity Not Found"));
+		when(productRepository.findById(nonExistingId)).thenThrow(new ResourceNotFoundException("Entity Not Found"));
 
 		assertThrows(ResourceNotFoundException.class, () -> {
-			productService.findById(existingId);
+			productService.findById(nonExistingId);
 		});
+		verify(productRepository, times(1)).findById(any());
 	}
 	
 	@Test
@@ -111,6 +114,7 @@ public class ProductServiceTests {
 		assertEquals(productDTO.getDescription(), response.getDescription());
 		assertEquals(productDTO.getClass(), response.getClass());
 		assertEquals(productDTO.getPrice(), response.getPrice());
+		verify(productRepository, times(1)).save(any());
 	}	
 	
 	@Test
@@ -123,6 +127,7 @@ public class ProductServiceTests {
 		assertEquals(ProductDTO.class, response.getClass());
 		assertEquals(product.getId(), response.getId());
 		assertEquals(product.getName(), response.getName());
+		verify(productRepository, times(1)).save(any());
 	}
 	
 	@Test
@@ -130,7 +135,8 @@ public class ProductServiceTests {
 		when(productRepository.getOne(nonExistingId)).thenThrow(EntityNotFoundException.class);
 		assertThrows(ResourceNotFoundException.class, () -> {
 			productService.update(nonExistingId, productDTO);
-		});
+		});		
+		verify(productRepository, times(0)).save(product);
 	}
 
 	@Test
@@ -151,7 +157,6 @@ public class ProductServiceTests {
 		assertThrows(ResourceNotFoundException.class, () -> {
 			productService.delete(nonExistingId);
 		});
-
 		verify(productRepository, times(1)).deleteById(nonExistingId);
 	}
 
