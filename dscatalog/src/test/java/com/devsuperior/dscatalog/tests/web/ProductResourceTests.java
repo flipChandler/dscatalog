@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -35,6 +36,7 @@ import com.devsuperior.dscatalog.services.ProductService;
 import com.devsuperior.dscatalog.services.exceptions.DatabaseException;
 import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
 import com.devsuperior.dscatalog.tests.factory.ProductFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 @SpringBootTest
@@ -50,6 +52,9 @@ public class ProductResourceTests {
 	@Value("${security.oauth2.client.client-id}")
 	private String clientId;
 	
+	@Autowired
+	private ObjectMapper mapper;
+	
 	@Value("${security.oauth2.client.client-secret}")
 	private String clientSecret;
 	
@@ -59,9 +64,13 @@ public class ProductResourceTests {
 	private ProductDTO newProductDTO;
 	private ProductDTO existingProductDTO;
 	private PageImpl<ProductDTO> page;
+	private String operatorUsername;
+	private String operatorPassword;
 	
 	@BeforeEach
 	void setup() throws Exception {
+		operatorUsername = "alex@gmail.com";
+		operatorPassword = "123456";
 		existingId = 1L;
 		nonExistingId = 2L;
 		dependentId = 3L;
@@ -112,15 +121,38 @@ public class ProductResourceTests {
 	}
 
 	@Test
-	public void updateShouldReturnProductDTO() throws Exception {
+	public void updateShouldReturnProductDTO_whenIdExists() throws Exception {
 		when(productService.update(eq(existingId), any())).thenReturn(existingProductDTO);				// eq = permite passar um valor, qndo o outro parametro é any()
-							
+		
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);		
+		String jsonBody = mapper.writeValueAsString(existingProductDTO);
+		
+		ResultActions result = mockMvc.perform(put("/products/{id}", existingId)
+				.header("Authorization", "Bearer " + accessToken)
+				.content(jsonBody)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON));
+				
+		result.andExpect(status().isOk());
+		result.andExpect(jsonPath("$.id").value(existingProductDTO.getId()));
+		result.andExpect(jsonPath("$.name").value(existingProductDTO.getName()));
+		result.andExpect(jsonPath("$.price").value(existingProductDTO.getPrice()));
 	}	
 	
 	@Test
 	public void updateShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
-		when(productService.update(eq(nonExistingId), any())).thenThrow(ResourceNotFoundException.class);				
-						
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);		
+		String jsonBody = mapper.writeValueAsString(existingProductDTO);
+		
+		when(productService.update(eq(nonExistingId), any())).thenThrow(ResourceNotFoundException.class);	
+		
+		ResultActions result = mockMvc.perform(put("/products/{id}", nonExistingId)
+				.header("Authorization", "Bearer " + accessToken)
+				.content(jsonBody)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON));
+				
+		result.andExpect(status().isNotFound());						
 	}	
 	
 	@Test
