@@ -58,8 +58,9 @@ public class ProductService {
 	}	
 
 	@Transactional
-	public ProductDTO update(ProductDTO dto) {
+	public ProductDTO update(Long id, ProductDTO dto) {
 		try {
+			dto.setId(id);
 			Product entity = repository.getOne(dto.getId()); 			// getById é lazy loading?
 			copyDtoToEntity(dto, entity);
 			entity = repository.save(entity);

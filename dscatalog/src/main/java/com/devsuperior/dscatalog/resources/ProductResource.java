@@ -66,8 +66,7 @@ public class ProductResource {
 
 	@PutMapping(value = "/{id}")
 	public ResponseEntity<ProductDTO> update(@PathVariable Long id, @Valid @RequestBody ProductDTO dto) {
-		dto.setId(id);
-		dto = service.update(dto);
+		dto = service.update(id, dto);
 		return ResponseEntity.ok(dto);
 	}
 

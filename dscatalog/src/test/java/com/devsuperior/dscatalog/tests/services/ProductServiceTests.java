@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -15,6 +16,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+
+import javax.persistence.EntityNotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +32,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.devsuperior.dscatalog.dto.CategoryDTO;
 import com.devsuperior.dscatalog.dto.ProductDTO;
 import com.devsuperior.dscatalog.entities.Product;
 import com.devsuperior.dscatalog.repository.ProductRepository;
@@ -39,19 +41,20 @@ import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
 import com.devsuperior.dscatalog.tests.factory.ProductFactory;
 
 @ExtendWith(SpringExtension.class)
-// @Transactional								// faz o rollback do banco em cada test 
+// @Transactional									// faz o rollback do banco em cada test 
 public class ProductServiceTests {
 
 	@InjectMocks
 	private ProductService productService;
 
-	@Mock // não carrega o contexto da aplicação | MockBean carrega o contexto
+	@Mock 											// não carrega o contexto da aplicação | MockBean carrega o contexto
 	private ProductRepository productRepository;
 
 	private long existingId;
 	private long nonExistingId;
 	private long dependentId;
 	private Product product, product2;
+	private ProductDTO productDTO;
 	private PageImpl<Product> page;
 
 
@@ -102,12 +105,22 @@ public class ProductServiceTests {
 	
 	@Test
 	public void updateShouldReturnProductDTOInstance_whenIdExists() {
-		// TODO: update return a ProductDTO
+		when(productRepository.getOne(any())).thenReturn(product);
+		when(productRepository.save(any())).thenReturn(product);
+				
+		ProductDTO response = productService.update(existingId, productDTO);
+		
+		assertEquals(ProductDTO.class, response.getClass());
+		assertEquals(product.getId(), response.getId());
+		assertEquals(product.getName(), response.getName());
 	}
 	
 	@Test
 	public void updateShouldThrowResourceNotFoundException_whenIdDoesNotExist() {
-		// TODO: update throw exception
+		when(productRepository.getOne(nonExistingId)).thenThrow(EntityNotFoundException.class);
+		assertThrows(ResourceNotFoundException.class, () -> {
+			productService.update(nonExistingId, productDTO);
+		});
 	}
 
 	@Test
@@ -147,6 +160,7 @@ public class ProductServiceTests {
 	void startProduct() {
 		product = ProductFactory.createProduct();
 		product2 = ProductFactory.createProduct();
+		productDTO = ProductFactory.createProductDTO();
 		page = new PageImpl<>(List.of(product, product2, new Product()));
 	}
 }
