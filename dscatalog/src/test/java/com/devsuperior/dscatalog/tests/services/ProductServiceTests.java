@@ -63,8 +63,6 @@ public class ProductServiceTests {
 		nonExistingId = 1000L;
 		dependentId = 4L;		
 		this.startProduct();
-
-		when(productRepository.save(any())).thenReturn(product);
 	}
 	
 	@Test
