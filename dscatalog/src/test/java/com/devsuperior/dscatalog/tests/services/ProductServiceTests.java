@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -102,6 +101,17 @@ public class ProductServiceTests {
 			productService.findById(existingId);
 		});
 	}
+	
+	@Test
+	public void insertShouldReturnProductDTOInstance() {
+		when(productRepository.save(any())).thenReturn(product);
+		
+		ProductDTO response = productService.insert(productDTO);
+		
+		assertEquals(productDTO.getDescription(), response.getDescription());
+		assertEquals(productDTO.getClass(), response.getClass());
+		assertEquals(productDTO.getPrice(), response.getPrice());
+	}	
 	
 	@Test
 	public void updateShouldReturnProductDTOInstance_whenIdExists() {
