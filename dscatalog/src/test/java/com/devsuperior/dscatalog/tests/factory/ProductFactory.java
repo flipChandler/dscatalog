@@ -24,4 +24,10 @@ public class ProductFactory {
 		productDTO.setId(id);
 		return productDTO;
 	}
+	
+	public static ProductDTO createProductDTONegativePrice(Double price) {
+		ProductDTO productDTO = createProductDTO();
+		productDTO.setPrice(price);;
+		return productDTO;
+	}
 }

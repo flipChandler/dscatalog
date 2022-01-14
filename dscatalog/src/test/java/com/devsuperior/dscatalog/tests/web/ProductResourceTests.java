@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -30,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException.UnprocessableEntity;
 
 import com.devsuperior.dscatalog.dto.ProductDTO;
 import com.devsuperior.dscatalog.services.ProductService;
@@ -66,6 +68,8 @@ public class ProductResourceTests {
 	private PageImpl<ProductDTO> page;
 	private String operatorUsername;
 	private String operatorPassword;
+	private Double negativePrice;
+	private ProductDTO newProductDTONegativePrice;
 	
 	@BeforeEach
 	void setup() throws Exception {
@@ -74,8 +78,10 @@ public class ProductResourceTests {
 		existingId = 1L;
 		nonExistingId = 2L;
 		dependentId = 3L;
+		negativePrice = -1D;
 		newProductDTO = ProductFactory.createProductDTO(null);
 		existingProductDTO = ProductFactory.createProductDTO(existingId);
+		newProductDTONegativePrice = ProductFactory.createProductDTONegativePrice(negativePrice);
 		page = new PageImpl<>(List.of(existingProductDTO));
 	}	
 	
@@ -116,8 +122,35 @@ public class ProductResourceTests {
 	
 	@Test
 	public void insertShouldReturnProductDTO() throws Exception {
-		when(productService.insert(any())).thenReturn(existingProductDTO);
+		when(productService.insert(any())).thenReturn(newProductDTO);
 		
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
+		String jsonBody = mapper.writeValueAsString(newProductDTO);
+		ResultActions result = mockMvc.perform(post("/products/")
+				.header("Authorization", "Bearer " + accessToken)
+				.content(jsonBody)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON));
+		
+		result.andExpect(status().isCreated());
+		result.andExpect(jsonPath("$.name").value(newProductDTO.getName()));
+		result.andExpect(jsonPath("$.price").value(newProductDTO.getPrice()));
+		result.andExpect(jsonPath("$.description").value(newProductDTO.getDescription()));
+	}
+	
+	@Test
+	public void insertShouldReturnUnprocessableEntity_whenNegativePrice() throws Exception {
+		when(productService.insert(newProductDTONegativePrice)).thenThrow(UnprocessableEntity.class);
+		
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
+		String jsonBody = mapper.writeValueAsString(newProductDTONegativePrice);
+		ResultActions result = mockMvc.perform(post("/products/")
+				.header("Authorization", "Bearer " + accessToken)
+				.content(jsonBody)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON));
+		
+		result.andExpect(status().isUnprocessableEntity());
 	}
 
 	@Test
@@ -141,10 +174,10 @@ public class ProductResourceTests {
 	
 	@Test
 	public void updateShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
-		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);		
-		String jsonBody = mapper.writeValueAsString(existingProductDTO);
-		
 		when(productService.update(eq(nonExistingId), any())).thenThrow(ResourceNotFoundException.class);	
+
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);		
+		String jsonBody = mapper.writeValueAsString(existingProductDTO);		
 		
 		ResultActions result = mockMvc.perform(put("/products/{id}", nonExistingId)
 				.header("Authorization", "Bearer " + accessToken)
@@ -157,20 +190,33 @@ public class ProductResourceTests {
 	
 	@Test
 	public void deleteShouldDoNothing_whenIdExist() throws Exception {
-		doNothing().when(productService).delete(existingId);				
+		doNothing().when(productService).delete(existingId);	
+		
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
+		ResultActions result = mockMvc.perform(delete("/products/{id}", existingId)
+				.header("Authorization", "Bearer " + accessToken)
+				.accept(MediaType.APPLICATION_JSON));
+		
+		result.andExpect(status().isNoContent());
 						
 	}	
 	
 	@Test
 	public void deleteShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
 		doThrow(ResourceNotFoundException.class).when(productService).delete(nonExistingId);				
-						
+		
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
+		ResultActions result = mockMvc.perform(delete("/products/{id}", nonExistingId)
+				.header("Authorization", "Bearer " + accessToken)
+				.accept(MediaType.APPLICATION_JSON));
+		
+		result.andExpect(status().isNotFound());
 	}
 	
 	@Test
 	public void deleteShouldThrowDatabaseException_whenIdIsDependent() throws Exception {
 		doThrow(DatabaseException.class).when(productService).delete(dependentId);				
-						
+		// TODO: this logic test				
 	}	
 	
 	private String obtainAccessToken(String username, String password) throws Exception {
