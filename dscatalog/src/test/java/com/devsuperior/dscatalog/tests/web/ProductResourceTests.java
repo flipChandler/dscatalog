@@ -86,7 +86,7 @@ public class ProductResourceTests {
 	}	
 	
 	@Test
-	public void findByIdShouldReturnProduct_whenIdExists() throws Exception {
+	public void findById_ShouldReturnProduct_whenIdExists() throws Exception {
 		when(productService.findById(existingId)).thenReturn(existingProductDTO);
 		
 		ResultActions result = mockMvc.perform(get("/products/{id}", existingId)
@@ -100,7 +100,7 @@ public class ProductResourceTests {
 	}
 	
 	@Test
-	public void findByIdShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
+	public void findById_ShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
 		when(productService.findById(nonExistingId)).thenThrow(ResourceNotFoundException.class);
 		
 		ResultActions result = mockMvc.perform(get("/products/{id}", nonExistingId)
@@ -110,7 +110,7 @@ public class ProductResourceTests {
 	}
 	
 	@Test
-	public void findAllShouldReturnPage() throws Exception {
+	public void findAll_ShouldReturnPage() throws Exception {
 		when(productService.findAllPaged(any(), anyString(), any())).thenReturn(page);
 						
 		ResultActions result = mockMvc.perform(get("/products")
@@ -121,25 +121,26 @@ public class ProductResourceTests {
 	}
 	
 	@Test
-	public void insertShouldReturnProductDTO() throws Exception {
+	public void insert_ShouldReturnProductDTOCreated_whenValidData() throws Exception {
 		when(productService.insert(any())).thenReturn(newProductDTO);
 		
 		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
 		String jsonBody = mapper.writeValueAsString(newProductDTO);
-		ResultActions result = mockMvc.perform(post("/products/")
+		ResultActions result = mockMvc.perform(post("/products")
 				.header("Authorization", "Bearer " + accessToken)
 				.content(jsonBody)
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON));
 		
 		result.andExpect(status().isCreated());
+		result.andExpect(jsonPath("$.id").value(newProductDTO.getId()));
 		result.andExpect(jsonPath("$.name").value(newProductDTO.getName()));
 		result.andExpect(jsonPath("$.price").value(newProductDTO.getPrice()));
 		result.andExpect(jsonPath("$.description").value(newProductDTO.getDescription()));
 	}
 	
 	@Test
-	public void insertShouldReturnUnprocessableEntity_whenNegativePrice() throws Exception {
+	public void insert_ShouldReturnUnprocessableEntity_whenNegativePrice() throws Exception {
 		when(productService.insert(newProductDTONegativePrice)).thenThrow(UnprocessableEntity.class);
 		
 		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
@@ -154,7 +155,7 @@ public class ProductResourceTests {
 	}
 
 	@Test
-	public void updateShouldReturnProductDTO_whenIdExists() throws Exception {
+	public void update_ShouldReturnProductDTO_whenIdExists() throws Exception {
 		when(productService.update(eq(existingId), any())).thenReturn(existingProductDTO);				// eq = permite passar um valor, qndo o outro parametro é any()
 		
 		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);		
@@ -173,7 +174,7 @@ public class ProductResourceTests {
 	}	
 	
 	@Test
-	public void updateShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
+	public void update_ShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
 		when(productService.update(eq(nonExistingId), any())).thenThrow(ResourceNotFoundException.class);	
 
 		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);		
@@ -189,7 +190,7 @@ public class ProductResourceTests {
 	}	
 	
 	@Test
-	public void deleteShouldDoNothing_whenIdExist() throws Exception {
+	public void delete_ShouldReturnNoContent_whenIdExist() throws Exception {
 		doNothing().when(productService).delete(existingId);	
 		
 		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
@@ -201,7 +202,7 @@ public class ProductResourceTests {
 	}	
 	
 	@Test
-	public void deleteShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
+	public void delete_ShouldReturnNotFound_whenIdDoesNotExist() throws Exception {
 		doThrow(ResourceNotFoundException.class).when(productService).delete(nonExistingId);				
 		
 		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
@@ -213,7 +214,7 @@ public class ProductResourceTests {
 	}
 	
 	@Test
-	public void deleteShouldThrowDatabaseException_whenIdIsDependent() throws Exception {
+	public void delete_ShouldReturnBadRequest_whenIdIsDependent() throws Exception {
 		doThrow(DatabaseException.class).when(productService).delete(dependentId);				
 		
 		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
