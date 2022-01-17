@@ -2,10 +2,13 @@ package com.devsuperior.dscatalog.tests.web;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -32,6 +35,7 @@ import org.springframework.util.MultiValueMap;
 
 import com.devsuperior.dscatalog.dto.CategoryDTO;
 import com.devsuperior.dscatalog.services.CategoryService;
+import com.devsuperior.dscatalog.services.exceptions.DatabaseException;
 import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
 import com.devsuperior.dscatalog.tests.factory.CategoryFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -145,6 +149,7 @@ public class CategoryResourceTests {
 		result.andExpect(status().isOk());
 		result.andExpect(jsonPath("$.id").value(existingCategoryDTO.getId()));
 		result.andExpect(jsonPath("$.name").value(existingCategoryDTO.getName()));
+		verify(categoryService, times(1)).update(any(), any());
 	}	
 	
 	@Test
@@ -160,7 +165,47 @@ public class CategoryResourceTests {
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON));
 				
-		result.andExpect(status().isNotFound());						
+		result.andExpect(status().isNotFound());	
+		verify(categoryService, times(1)).update(any(), any());
+	}
+	
+	@Test
+	public void delete_ShouldReturnNoContent_whenIdExist() throws Exception {
+		doNothing().when(categoryService).delete(existingId);	
+		
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
+		ResultActions result = mockMvc.perform(delete("/categories/{id}", existingId)
+				.header("Authorization", "Bearer " + accessToken)
+				.accept(MediaType.APPLICATION_JSON));
+		
+		result.andExpect(status().isNoContent());	
+		verify(categoryService, times(1)).delete(any());
+	}	
+	
+	@Test
+	public void delete_ShouldReturnNotFound_whenIdDoesNotExist() throws Exception {
+		doThrow(ResourceNotFoundException.class).when(categoryService).delete(nonExistingId);				
+		
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
+		ResultActions result = mockMvc.perform(delete("/categories/{id}", nonExistingId)
+				.header("Authorization", "Bearer " + accessToken)
+				.accept(MediaType.APPLICATION_JSON));
+		
+		result.andExpect(status().isNotFound());
+		verify(categoryService, times(1)).delete(any());
+	}
+	
+	@Test
+	public void delete_ShouldReturnBadRequest_whenIdIsDependent() throws Exception {
+		doThrow(DatabaseException.class).when(categoryService).delete(dependentId);				
+		
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
+		ResultActions result = mockMvc.perform(delete("/categories/{id}", dependentId)
+				.header("Authorization", "Bearer " + accessToken)
+				.accept(MediaType.APPLICATION_JSON));
+		
+		result.andExpect(status().isBadRequest());
+		verify(categoryService, times(1)).delete(any());
 	}	
 		
 	private String obtainAccessToken(String username, String password) throws Exception {		 
