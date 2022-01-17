@@ -90,9 +90,21 @@ public class CategoryServiceTests {
 		verify(categoryRepository, times(1)).findById(any());
 	}
 	
+	@Test
+	public void insert_ShouldReturnCategoryDTO() {
+		when(categoryRepository.save(any())).thenReturn(category);
+		when(categoryRepository.getOne(any())).thenReturn(category);
+		
+		CategoryDTO response = categoryService.insert(categoryDTO);
+		
+		assertEquals(categoryDTO.getClass(), response.getClass());
+		assertEquals(categoryDTO.getName(), response.getName());
+		verify(categoryRepository, times(1)).save(any());
+	}	
+	
 	void startCategory() {
 		category = CategoryFactory.createCategory();
 		categoryDTO = CategoryFactory.createCategoryDTO();
 		page = new PageImpl<>(List.of(category));
-	}
+	}	
 }
