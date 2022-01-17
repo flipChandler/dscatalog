@@ -1,12 +1,14 @@
 package com.devsuperior.dscatalog.tests.web;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -114,6 +116,7 @@ public class CategoryResourceTests {
 		
 		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
 		String jsonBody = mapper.writeValueAsString(newCategoryDTO);
+
 		ResultActions result = mockMvc.perform(post("/categories")
 				.header("Authorization", "Bearer " + accessToken)
 				.content(jsonBody)
@@ -125,9 +128,42 @@ public class CategoryResourceTests {
 		result.andExpect(jsonPath("$.name").value(newCategoryDTO.getName()));
 		verify(categoryService, times(1)).insert(any());
 	}
+	
+	@Test
+	public void update_ShouldReturnCategoryDTO_whenIdExists() throws Exception {
+		when(categoryService.update(eq(existingId), any())).thenReturn(existingCategoryDTO);				// eq = permite passar um valor, qndo o outro parametro é any()
 		
-	private String obtainAccessToken(String username, String password) throws Exception {
-		 
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);		
+		String jsonBody = mapper.writeValueAsString(existingCategoryDTO);
+		
+		ResultActions result = mockMvc.perform(put("/categories/{id}", existingId)
+				.header("Authorization", "Bearer " + accessToken)
+				.content(jsonBody)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON));
+				
+		result.andExpect(status().isOk());
+		result.andExpect(jsonPath("$.id").value(existingCategoryDTO.getId()));
+		result.andExpect(jsonPath("$.name").value(existingCategoryDTO.getName()));
+	}	
+	
+	@Test
+	public void update_ShouldThrowResourceNotFoundException_whenIdDoesNotExist() throws Exception {
+		when(categoryService.update(eq(nonExistingId), any())).thenThrow(ResourceNotFoundException.class);	
+
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);		
+		String jsonBody = mapper.writeValueAsString(existingCategoryDTO);		
+		
+		ResultActions result = mockMvc.perform(put("/categories/{id}", nonExistingId)
+				.header("Authorization", "Bearer " + accessToken)
+				.content(jsonBody)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON));
+				
+		result.andExpect(status().isNotFound());						
+	}	
+		
+	private String obtainAccessToken(String username, String password) throws Exception {		 
 	    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 	    params.add("grant_type", "password");
 	    params.add("client_id", clientId);
