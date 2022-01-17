@@ -24,9 +24,9 @@ public class CategoryService {
 	@Autowired
 	private CategoryRepository repository;
 	
-	@Transactional(readOnly = true) // readOnly evita o lock no BD | não trava o BD pra fazer essa query
+	@Transactional(readOnly = true) 									// readOnly evita o lock no BD | não trava o BD pra fazer essa query
 	public Page<CategoryDTO> findAllPaged(PageRequest pageRequest) {
-		Page<Category> list = repository.findAll(pageRequest); // Page já é um stream
+		Page<Category> list = repository.findAllPaged(pageRequest); 	// Page já é um stream
 		
 		return list.map(category -> new CategoryDTO(category));
 	}
@@ -49,7 +49,7 @@ public class CategoryService {
 	@Transactional
 	public CategoryDTO update(CategoryDTO dto) {
 		try {
-			Category entity = repository.getOne(dto.getId()); // getById é lazy loading?
+			Category entity = repository.getOne(dto.getId()); 				
 			entity.setName(dto.getName());
 			entity = repository.save(entity);
 			return new CategoryDTO(entity);
