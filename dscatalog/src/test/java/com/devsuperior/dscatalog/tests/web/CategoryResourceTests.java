@@ -1,5 +1,7 @@
 package com.devsuperior.dscatalog.tests.web;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -92,7 +94,18 @@ public class CategoryResourceTests {
 				.accept(MediaType.APPLICATION_JSON));
 				
 		result.andExpect(status().isNotFound());		
-	}	
+	}
+	
+	@Test
+	public void findAll_ShouldReturnPage() throws Exception {
+		when(categoryService.findAllPaged(any())).thenReturn(page);
+						
+		ResultActions result = mockMvc.perform(get("/categories")
+				.accept(MediaType.APPLICATION_JSON));
+				
+		result.andExpect(status().isOk());
+		result.andExpect(jsonPath("$.content").exists());
+	}
 		
 	private String obtainAccessToken(String username, String password) throws Exception {
 		 
