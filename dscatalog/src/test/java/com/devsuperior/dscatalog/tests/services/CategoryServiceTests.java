@@ -1,10 +1,12 @@
 package com.devsuperior.dscatalog.tests.services;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,6 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +33,7 @@ import com.devsuperior.dscatalog.dto.CategoryDTO;
 import com.devsuperior.dscatalog.entities.Category;
 import com.devsuperior.dscatalog.repository.CategoryRepository;
 import com.devsuperior.dscatalog.services.CategoryService;
+import com.devsuperior.dscatalog.services.exceptions.DatabaseException;
 import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
 import com.devsuperior.dscatalog.tests.factory.CategoryFactory;
 
@@ -46,11 +51,13 @@ public class CategoryServiceTests {
 	private CategoryDTO categoryDTO;
 	private PageImpl<Category> page;
 	private Category category;
+	private long dependentId;
 
 	@BeforeEach
 	void setup() {
 		existingId = 1L;
 		nonExistingId = 1000L;
+		dependentId = 4L;
 		this.startCategory();
 	}
 	
@@ -125,6 +132,39 @@ public class CategoryServiceTests {
 			categoryService.update(nonExistingId, categoryDTO);
 		});		
 		verify(categoryRepository, times(0)).save(category);
+	}
+	
+	@Test
+	public void delete_ShouldDoNothing_whenIdExists() {
+		doNothing().when(categoryRepository).deleteById(existingId);
+
+		assertDoesNotThrow(() -> {
+			categoryService.delete(existingId);
+		});
+
+		verify(categoryRepository, times(1)).deleteById(existingId);
+	}
+
+	@Test
+	public void delete_ShouldThrowResourceNotFoundException_whenIdDoesNotExist() {
+		doThrow(EmptyResultDataAccessException.class).when(categoryRepository).deleteById(nonExistingId);
+
+		assertThrows(ResourceNotFoundException.class, () -> {
+			categoryService.delete(nonExistingId);
+		});
+		verify(categoryRepository, times(1)).deleteById(nonExistingId);
+	}
+
+	@Test
+	public void delete_ShouldThrowDatabaseException_whenIdIsDependent() {
+		doThrow(DataIntegrityViolationException.class).when(categoryRepository).deleteById(dependentId);
+
+		assertThrows(DatabaseException.class, () -> {
+			categoryService.delete(dependentId);
+		});
+		
+		// se uma categoria tiver um produto, não poderá deletar a categoria
+		verify(categoryRepository, times(1)).deleteById(dependentId); 
 	}
 	
 	void startCategory() {
