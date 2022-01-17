@@ -5,12 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+
+import javax.persistence.EntityNotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -100,7 +103,29 @@ public class CategoryServiceTests {
 		assertEquals(categoryDTO.getClass(), response.getClass());
 		assertEquals(categoryDTO.getName(), response.getName());
 		verify(categoryRepository, times(1)).save(any());
-	}	
+	}
+	
+	@Test
+	public void update_ShouldReturnCategoryDTOInstance_whenIdExists() {
+		when(categoryRepository.getOne(existingId)).thenReturn(category);
+		when(categoryRepository.save(any())).thenReturn(category);
+
+		CategoryDTO dto = new CategoryDTO();
+		CategoryDTO response = categoryService.update(existingId, dto);
+		
+		assertEquals(CategoryDTO.class, response.getClass());
+		assertEquals(category.getId(), response.getId());
+		verify(categoryRepository, times(1)).save(any());
+	}
+	
+	@Test
+	public void update_ShouldThrowResourceNotFoundException_whenIdDoesNotExist() {
+		doThrow(EntityNotFoundException.class).when(categoryRepository).getOne(nonExistingId);
+		assertThrows(ResourceNotFoundException.class, () -> {
+			categoryService.update(nonExistingId, categoryDTO);
+		});		
+		verify(categoryRepository, times(0)).save(category);
+	}
 	
 	void startCategory() {
 		category = CategoryFactory.createCategory();
