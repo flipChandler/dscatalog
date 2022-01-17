@@ -1,7 +1,8 @@
 package com.devsuperior.dscatalog.tests.web;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -105,6 +106,24 @@ public class CategoryResourceTests {
 				
 		result.andExpect(status().isOk());
 		result.andExpect(jsonPath("$.content").exists());
+	}
+	
+	@Test
+	public void insert_ShouldReturnCategoryDTOCreated_whenValidData() throws Exception {
+		when(categoryService.insert(any())).thenReturn(newCategoryDTO);
+		
+		String accessToken = obtainAccessToken(operatorUsername, operatorPassword);
+		String jsonBody = mapper.writeValueAsString(newCategoryDTO);
+		ResultActions result = mockMvc.perform(post("/categories")
+				.header("Authorization", "Bearer " + accessToken)
+				.content(jsonBody)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON));
+		
+		result.andExpect(status().isCreated());
+		result.andExpect(jsonPath("$.id").value(newCategoryDTO.getId()));
+		result.andExpect(jsonPath("$.name").value(newCategoryDTO.getName()));
+		verify(categoryService, times(1)).insert(any());
 	}
 		
 	private String obtainAccessToken(String username, String password) throws Exception {
